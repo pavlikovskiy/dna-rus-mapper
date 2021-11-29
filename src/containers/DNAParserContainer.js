@@ -1,8 +1,13 @@
-import React, { useState } from "react";
-import { makeStyles } from "@material-ui/core/styles";
+import React, {useEffect, useState} from "react";
+import {makeStyles} from "@material-ui/core/styles";
 import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
-import codes from '../codes.json';
+import InputLabel from '@material-ui/core/InputLabel';
+import MenuItem from '@material-ui/core/MenuItem';
+import FormControl from '@material-ui/core/FormControl';
+import Select from '@material-ui/core/Select';
+import codes2 from '../codes-2.json';
+import codes3 from '../codes-3.json';
 
 const useStyles = makeStyles(() => ({
   root: {
@@ -31,17 +36,17 @@ const DNAParserContainer = () => {
   const classes = useStyles();
   const [left, setLeft] = useState('');
   const [right, setRight] = useState('');
+  const [step, setStep] = React.useState(3);
+  const [codes, setCodes] = React.useState(codes3);
 
-  const handleNDA = (e) => {
+  const handleNDA = () => {
     stats = {}; // reset stats
-    const l = e.target.value;
-    setLeft(l);
     // remove line numbers if any and spaces and new lines
-    let r = l.replace(new RegExp("[0-9 \n]", "g"), "");
+    let r = left.replace(new RegExp("[0-9 \n]", "g"), "");
 
     let outStr = '';
-    for (let i = 0; i < r.length - 2; i = i+3) {
-      const str = r.substring(i, i+3);
+    for (let i = 0; i <= r.length - step; i = i + step) {
+      const str = r.substring(i, i + step);
       if (codes[str]) {
         outStr += ` ${Array.isArray(codes[str]) ? '<b>[' + codes[str].join(', ') + ']</b>' : '<b>' + codes[str] + '</b>'}`;
         incrementStat(str);
@@ -51,6 +56,28 @@ const DNAParserContainer = () => {
     }
     setRight(outStr);
   }
+
+  const handleStepChange = (event) => {
+    const newStep = parseInt(event.target.value, 10);
+    setStep(newStep);
+    switch (newStep) {
+      case 2:
+        setCodes(codes2);
+        break;
+      case 3:
+        setCodes(codes3);
+        break;
+    }
+  };
+
+  const handleLeftChange = (e) => {
+    setLeft(e.target.value);
+  }
+
+  useEffect(() => {
+    handleNDA();
+  }, [step, left]);
+
 
   // replacement stat
   const statArr = [];
@@ -71,19 +98,19 @@ const DNAParserContainer = () => {
   })
 
 
-
   return (
     <div className={classes.root}>
       <Grid container spacing={1}>
 
         <Grid item sm={6}>
-          <Typography>Input (e.g. copy from https://www.ncbi.nlm.nih.gov/nuccore/NM_006547.3 and paste below)</Typography>
+          <Typography>Input (e.g. copy from https://www.ncbi.nlm.nih.gov/nuccore/NM_006547.3 and paste
+            below)</Typography>
           <div className={classes.paper}>
             <textarea
-            name='left'
-            value={left}
-            onChange={handleNDA}
-            className={classes.textarea}
+              name='left'
+              value={left}
+              onChange={handleLeftChange}
+              className={classes.textarea}
             >
             </textarea>
           </div>
@@ -103,10 +130,24 @@ const DNAParserContainer = () => {
         </Grid>
 
         <Grid item sm={6}>
+          <FormControl style={{width: 100, paddingBottom: 20}}>
+            <InputLabel id="select-step-label">Code Step</InputLabel>
+            <Select
+              labelId="select-step-label"
+              id="select-step"
+              value={step}
+              label="Age"
+              onChange={handleStepChange}
+            >
+              <MenuItem value={3}>3</MenuItem>
+              <MenuItem value={2}>2</MenuItem>
+            </Select>
+          </FormControl>
+
           <Typography>Codes and stats</Typography>
           <div className={classes.paper}>
             {
-              statArr.map( row => (<div>{row}</div>))
+              statArr.map(row => (<div>{row}</div>))
             }
           </div>
           {totalPermutations > 1 && (
